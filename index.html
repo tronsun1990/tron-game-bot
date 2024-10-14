@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tap Game TRX</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: Times New Roman, sans-serif;
+      background-image: url('https://i.ibb.co/L6r6Fgh/IMG-1326.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin: 0;
+    }
+
+    #tap-button {
+      width: 150px;
+      height: 150px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    #score {
+      margin-top: 20px;
+      font-size: 24px;
+      color: white;
+    }
+
+    h1 {
+      color: white;
+    }
+
+    #boost-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #FF6347;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #boost-button:disabled {
+      background-color: grey;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tap to earn TRX!</h1>
+
+  <!-- Tap button image -->
+  <img id="tap-button" src="https://i.ibb.co/MDQ4GmF/tron-3-512.png" alt="Tap the Tron Character!" />
+
+  <div id="score"> 0 TRX</div>
+
+  <!-- Boost button for x25 score multiplier -->
+  <button id="boost-button" disabled>Activate x25 Boost (1 min)</button>
+
+  <!-- Game Logic using localStorage -->
+  <script>
+    let score = 0;
+    let multiplier = 1; // Multiplier (1x by default, x25 during boost)
+    const userId = 'user-123'; // Example unique ID for local storage
+    const scoreDisplay = document.getElementById('score');
+    const tapButton = document.getElementById('tap-button');
+    const boostButton = document.getElementById('boost-button');
+    const boostDuration = 1 * 60 * 1000; // 1 minutE in milliseconds
+    const twelveHours = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+    let boostTimeout = null; // Holds the reference for the boost timeout
+
+    // Function to save score to localStorage
+    function saveScoreLocally(userId, score) {
+      localStorage.setItem(userId + '_score', score);
+    }
+
+    // Function to retrieve score from localStorage
+    function getScoreFromLocalStorage(userId) {
+      const savedScore = localStorage.getItem(userId + '_score');
+      if (savedScore !== null) {
+        score = parseInt(savedScore);
+        scoreDisplay.textContent = `${score} TRX`;
+      } else {
+        score = 0; // Default score if not found
+        scoreDisplay.textContent = `${score} TRX`;
+      }
+    }
+
+    // Function to enable boost button
+    function enableBoostButton() {
+      boostButton.disabled = false;
+      boostButton.textContent = "Activate x100 Boost (2 min)";
+    }
+
+    // Function to disable boost button
+    function disableBoostButton() {
+      boostButton.disabled = true;
+      boostButton.textContent = "Boost in Cooldown";
+    }
+
+    // Check boost availability and status on page load
+    function checkBoostStatus() {
+      const lastBoostTime = localStorage.getItem('lastBoostTime');
+      const boostStartTime = localStorage.getItem('boostStartTime');
+      const currentTime = new Date().getTime();
+
+      // If boost is active, restore the boost for remaining time
+      if (boostStartTime) {
+        const elapsedTime = currentTime - boostStartTime;
+
+        if (elapsedTime < boostDuration) {
+          const remainingBoostTime = boostDuration - elapsedTime;
+          activateBoost(remainingBoostTime);
+          return;
+        }
+      }
+
+      // Check if the 12-hour cooldown has passed
+      if (!lastBoostTime || (currentTime - lastBoostTime) >= twelveHours) {
+        enableBoostButton();
+      } else {
+        disableBoostButton(); // Keep the button disabled until cooldown is over
+        const remainingTime = twelveHours - (currentTime - lastBoostTime);
+        setTimeout(enableBoostButton, remainingTime); // Enable boost when 12 hours pass
+      }
+    }
+
+    // Function to activate boost
+    function activateBoost(duration = boostDuration) {
+      multiplier = 25; // Activate x25 boost
+      boostButton.disabled = true;
+      boostButton.textContent = "Boost Active!";
+      localStorage.setItem('boostStartTime', new Date().getTime()); // Store boost start time
+
+      // Set boost back to normal after the remaining duration
+      boostTimeout = setTimeout(() => {
+        multiplier = 1; // Reset to 1x
+        disableBoostButton();
+        localStorage.setItem('lastBoostTime', new Date().getTime()); // Save last boost time
+        localStorage.removeItem('boostStartTime'); // Remove boost start time
+        checkBoostStatus(); // Reset the availability
+      }, duration);
+    }
+
+    // Load the user's score from localStorage when the game starts
+    getScoreFromLocalStorage(userId);
+    checkBoostStatus(); // Check if the boost button should be enabled or if a boost is still active
+
+    // Handle button tap event to increment score
+    tapButton.addEventListener('click', () => {
+      score += Math.round(1 * multiplier); // Apply the multiplier
+      scoreDisplay.textContent = `${score} TRX`;
+      saveScoreLocally(userId, score); // Save updated score to localStorage
+    });
+
+    // Handle boost button click
+    boostButton.addEventListener('click', () => {
+      const lastBoostTime = localStorage.getItem('lastBoostTime');
+      const currentTime = new Date().getTime();
+
+      // Check if 12 hours have passed since last boost before activating it
+      if (!lastBoostTime || (currentTime - lastBoostTime) >= twelveHours) {
+        activateBoost();
+      } else {
+        alert("Boost is still in cooldown. Please wait until the cooldown ends.");
+      }
+    });
+  </script>
+</body>
+</html>
