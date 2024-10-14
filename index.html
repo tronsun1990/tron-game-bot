@@ -28,14 +28,15 @@
       height: 150px;
       cursor: pointer;
       touch-action: manipulation;
-          }
+    }
 
     #score {
-  margin-top: 20px;
-  font-size: 24px;
-  color: white;
-  text-shadow: 0px 0px 10px rgba(0, 255, 255, 0.7); /* Adding glow effect */
-}
+      margin-top: 20px;
+      font-size: 24px;
+      color: white;
+      text-shadow: 0px 0px 10px rgba(0, 255, 255, 0.7); /* Adding glow effect */
+      font-weight: bold; /* Making the font bold */
+    }
 
     h1 {
       color: white;
@@ -52,8 +53,6 @@
       color: white;
       cursor: pointer;
       font-family: 'Orbitron', sans-serif; /* Font for the button */
-      font-weight: bold; /* Making the font bold */
-
     }
 
     #boost-button:disabled {
@@ -66,6 +65,14 @@
       font-size: 18px;
       color: white;
       text-shadow: 0px 0px 10px rgba(0, 255, 255, 0.7); /* Adding glow effect */
+    }
+
+    #boost-label {
+      font-weight: bold; /* Make only the label bold */
+    }
+
+    #boost-time {
+      font-weight: normal; /* Ensure the time is not bold */
     }
   </style>
 </head>
@@ -81,7 +88,7 @@
   <button id="boost-button" disabled>Activate x25 Boost (1 min)</button>
 
   <!-- Countdown for the next boost activation -->
-  <div id="countdown">Next boost available in: --:--:--</div>
+  <div id="countdown"><span id="boost-label">Next boost available in:</span> <span id="boost-time">--:--:--</span></div>
 
   <!-- Game Logic using localStorage -->
   <script>
@@ -143,7 +150,8 @@
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        countdownDisplay.textContent = `Next boost available in: ${hours}h ${minutes}m ${seconds}s`;
+        // Update only the time part, not the label
+        document.getElementById('boost-time').textContent = `${hours}h ${minutes}m ${seconds}s`;
       }, 1000);
     }
 
