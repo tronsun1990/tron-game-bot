@@ -51,6 +51,12 @@
       background-color: grey;
       cursor: not-allowed;
     }
+
+    #countdown {
+      margin-top: 10px;
+      font-size: 18px;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -64,6 +70,9 @@
   <!-- Boost button for x25 score multiplier -->
   <button id="boost-button" disabled>Activate x25 Boost (1 min)</button>
 
+  <!-- Countdown for the next boost activation -->
+  <div id="countdown">Next boost available in: --:--:--</div>
+
   <!-- Game Logic using localStorage -->
   <script>
     let score = 0;
@@ -72,9 +81,11 @@
     const scoreDisplay = document.getElementById('score');
     const tapButton = document.getElementById('tap-button');
     const boostButton = document.getElementById('boost-button');
+    const countdownDisplay = document.getElementById('countdown'); // Countdown element
     const boostDuration = 1 * 60 * 1000; // 1 minute in milliseconds
     const twelveHours = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
     let boostTimeout = null; // Holds the reference for the boost timeout
+    let countdownInterval = null; // Holds the interval for the countdown
 
     // Function to save score to localStorage
     function saveScoreLocally(userId, score) {
@@ -97,12 +108,33 @@
     function enableBoostButton() {
       boostButton.disabled = false;
       boostButton.textContent = "Activate x25 Boost (1 min)";
+      countdownDisplay.textContent = "Next boost available now!";
     }
 
-    // Function to disable boost button
+    // Function to disable boost button and start the countdown
     function disableBoostButton() {
       boostButton.disabled = true;
       boostButton.textContent = "Boost in Cooldown";
+    }
+
+    // Function to calculate and display countdown
+    function updateCountdown(endTime) {
+      countdownInterval = setInterval(() => {
+        const currentTime = new Date().getTime();
+        const distance = endTime - currentTime;
+
+        if (distance < 0) {
+          clearInterval(countdownInterval);
+          enableBoostButton();
+          return;
+        }
+
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownDisplay.textContent = `Next boost available in: ${hours}h ${minutes}m ${seconds}s`;
+      }, 1000);
     }
 
     // Check boost availability and status on page load
@@ -128,7 +160,7 @@
       } else {
         disableBoostButton(); // Keep the button disabled until cooldown is over
         const remainingTime = twelveHours - (currentTime - lastBoostTime);
-        setTimeout(enableBoostButton, remainingTime); // Enable boost when 12 hours pass
+        updateCountdown(currentTime + remainingTime); // Start the countdown
       }
     }
 
